@@ -1,0 +1,458 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String         @id @default(uuid())
+  name              String?
+  email             String?        @unique
+  image             String?
+  password          String?
+
+  emailVerified     DateTime?
+  socialAccounts    Account[]
+  sessions          Session[]
+  profile           Profile?       
+  apiCredential     ApiCredential?
+
+  userType          UserType  @relation(fields: [userTypeId], references: [id])
+  userTypeId        Int
+
+  userRolePerContexts     UserRolePerContext[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @default(now()) @updatedAt
+}
+
+model Role {
+  id                      Int         @id @default(autoincrement())
+  name                    String      @unique
+  userRolePerContexts     UserRolePerContext[]
+}
+
+
+model UserType{
+  id                Int           @id @default(autoincrement())
+  name              String        @unique
+  user              User[]
+}
+
+model UserRolePerContext {
+  id                Int     @id @default(autoincrement())
+
+  user              User    @relation(fields: [userId], references: [id])
+  userId            String
+
+  role              Role    @relation(fields: [roleId], references: [id])
+  roleId            Int
+
+  context           String  // เช่น 'platform', 'dealer', 'reseller', 'brand', 'shop'
+  contextId         String  // ID ของบริบทนั้น ๆ
+}
+
+
+model Profile{
+  id                Int        @id @default(autoincrement())
+  firstName         String
+  lastName          String
+  avatar            String?
+  mobile            String?
+
+  brands            Brand[]       @relation("profileBrands")
+  addresses         Address[]
+    
+  userId            String?       @unique
+  user              User?         @relation(fields: [userId], references: [id])
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @default(now()) @updatedAt
+}
+
+model Account {
+  id                String        @id @default(uuid())
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?       @db.Text
+  access_token      String?       @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?       @db.Text
+  session_state     String?
+
+  userId          String?
+  user              User?   @relation(fields: [userId], references: [id],onDelete: Cascade)
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @default(now()) @updatedAt
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id                Int      @id @default(autoincrement())
+  sessionToken      String   @unique
+  expires           DateTime
+
+  userId            String?
+  user              User?   @relation(fields: [userId], references: [id],onDelete: Cascade)
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt 
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
+
+  @@unique([identifier, token])
+}
+
+model ApiCredential {
+  id                String   @id @default(uuid())
+  ownerType         String   // 'user' | 'brand' | 'device'
+
+  userId            String?  @unique
+  user              User?    @relation(fields: [userId], references: [id],onDelete: Cascade)
+
+  appKey            String   @unique
+  appSecret         String
+  active            Boolean  @default(true)
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @default(now()) @updatedAt
+}
+
+model Brand {
+  id             Int     @id @default(autoincrement())
+  brandId        String  @unique
+  name           String
+  
+  profileUuid    Int
+  profile        Profile    @relation("profileBrands", fields: [profileUuid], references: [id], onDelete: Cascade)
+  
+  shops          Shop[]
+  assets         Asset[]
+  paymentAgents  PaymentAgent[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Address {
+  id            String       @id @default(uuid())
+  name          String?
+  recipient     String?
+  phone         String?
+  addressLine   String
+
+  subDistrictId Int
+  subDistrict   SubDistrict @relation(fields: [subDistrictId], references: [id])
+
+  shopId        Int?
+  shop          Shop?        @relation(fields: [shopId], references: [id])
+
+  profileId     Int?
+  profile       Profile?     @relation(fields: [profileId], references: [id])
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
+}
+
+model SubDistrict {
+  id         Int       @id
+  nameTh     String
+  nameEn     String
+  zipCode    String
+
+  districtId Int
+  district   District @relation(fields: [districtId], references: [id])
+  addresses  Address[]
+}
+
+model District {
+  id         Int       @id
+  nameTh     String
+  nameEn     String
+
+  provinceId Int
+  province   Province @relation(fields: [provinceId], references: [id])
+  subDistricts SubDistrict[]
+}
+
+model Province {
+  id         Int      @id
+  nameTh     String
+  nameEn     String
+  districts  District[]
+}
+
+model Shop {
+  id        Int      @id @default(autoincrement())
+  name      String
+  brandUuid String
+  brand     Brand    @relation(fields: [brandUuid], references: [brandId])
+  assets    Asset[]
+  transactions Transaction[]
+  addresses   Address[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
+model AssetType {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  assets      Asset[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Asset {
+  id        Int     @id @default(autoincrement())
+  assetId   String  @unique
+  name      String
+  typeId    Int
+  shopId    Int
+  brandUuid String
+  status    String?
+  shop      Shop      @relation(fields: [shopId], references: [id])
+  brand     Brand     @relation(fields: [brandUuid], references: [brandId])
+  assetType AssetType @relation(fields: [typeId], references: [id])
+  device    Device?
+  machine   Machine?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model DeviceType {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  devices     Device[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Device {
+  id           Int     @id @default(autoincrement())
+  macAddress   String  @unique
+  assetId      String  @unique
+  deviceTypeId Int?
+  asset        Asset       @relation(fields: [assetId], references: [assetId])
+  deviceType   DeviceType? @relation(fields: [deviceTypeId], references: [id])
+  configId     Int?
+  config       Config?     @relation(fields: [configId], references: [id])
+  products     ProductOnDevice[]
+  transactions Transaction[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model MachineType {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  machines    Machine[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Machine {
+  id                 Int     @id @default(autoincrement())
+  serialNumber       String  @unique
+  assetId            String  @unique
+  machineTypeId      Int?
+  asset              Asset        @relation(fields: [assetId], references: [assetId])
+  machineType        MachineType? @relation(fields: [machineTypeId], references: [id])
+  brand              String?
+  model              String?
+  seller             String?
+  sellerContact      String?
+  warrantyExpireDate DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+}
+
+model Config {
+  id           Int    @id @default(autoincrement())
+  uuid         String @unique @default(uuid())
+  wifiConfigId Int?
+  wifiConfig   WifiConfig? @relation("WifiConfigRelation", fields: [wifiConfigId], references: [id])
+  apiConfigId  Int?
+  apiConfig    ApiConfig?  @relation("ApiConfigRelation", fields: [apiConfigId], references: [id])
+  mqttConfigId Int?
+  mqttConfig   MqttConfig? @relation("MqttConfigRelation", fields: [mqttConfigId], references: [id])
+  devices      Device[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model WifiConfig {
+  id      Int     @id @default(autoincrement())
+  ssid    String
+  password String
+  configs Config[] @relation("WifiConfigRelation")
+}
+
+model ApiConfig {
+  id       Int    @id @default(autoincrement())
+  host     String
+  port     Int
+  user     String
+  password String
+  configs  Config[] @relation("ApiConfigRelation")
+}
+
+model MqttConfig {
+  id       Int    @id @default(autoincrement())
+  host     String
+  port     Int
+  user     String
+  password String
+  pubTopic String
+  subTopic String
+  configs  Config[] @relation("MqttConfigRelation")
+}
+
+model ProductUnit {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  products    Product[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Product {
+  id         Int     @id @default(autoincrement())
+  sku        String  @unique
+  name       String
+  price      Float
+  qty        Int
+  unitId     Int
+  unit       ProductUnit @relation(fields: [unitId], references: [id])
+  devices    ProductOnDevice[]
+  transactions Transaction[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
+model ProductOnDevice {
+  id               Int    @id @default(autoincrement())
+  productSku       String
+  deviceMacAddress String
+  product Product @relation(fields: [productSku], references: [sku])
+  device  Device  @relation(fields: [deviceMacAddress], references: [macAddress])
+  createdAt DateTime @default(now())
+}
+
+model Transaction {
+  id                 Int    @id @default(autoincrement())
+  transactionId      String @unique @default(uuid())
+  shopId             Int
+  deviceMacAddress   String
+  productSku         String
+  paymentMethodId    Int
+  paymentRequestId   Int?  @unique
+  paymentResponseId  Int?  @unique
+  transactionStatus  TransactionStatus
+  quantity           Int   @default(1)
+  unitPrice          Float
+  totalPrice         Float
+  errorMessage       String?
+  paidAt             DateTime?
+  shop            Shop            @relation(fields: [shopId], references: [id])
+  device          Device          @relation(fields: [deviceMacAddress], references: [macAddress])
+  product         Product         @relation(fields: [productSku], references: [sku])
+  paymentMethod   PaymentMethod   @relation(fields: [paymentMethodId], references: [id])
+  paymentRequest  PaymentRequest? @relation(fields: [paymentRequestId], references: [id])
+  paymentResponse PaymentResponse?@relation(fields: [paymentResponseId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model PaymentRequest {
+  id              Int     @id @default(autoincrement())
+  providerId      Int
+  requestData     Json?
+  transaction     Transaction?
+  paymentProvider PaymentProvider @relation(fields: [providerId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model PaymentResponse {
+  id              Int     @id @default(autoincrement())
+  providerId      Int
+  responseData    Json?
+  transaction     Transaction?
+  paymentProvider PaymentProvider @relation(fields: [providerId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model PaymentMethod {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  transactions Transaction[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model PaymentProvider {
+  id               Int     @id @default(autoincrement())
+  code             String  @unique
+  name             String
+  description      String?
+  isActive         Boolean @default(true)
+  paymentRequests  PaymentRequest[]
+  paymentResponses PaymentResponse[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+}
+
+model PaymentAgent {
+  id             Int     @id @default(autoincrement())
+  brandUuid      String
+  name           String
+  host           String
+  authUrl        String
+  tokenUrl       String
+  apiBaseUrl     String
+  clientId       String
+  clientSecret   String
+  accessToken    String?
+  refreshToken   String?
+  expiresAt      DateTime?
+  brand          Brand   @relation(fields: [brandUuid], references: [brandId])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+enum TransactionStatus {
+  SUCCESS
+  PENDING
+  FAILED
+  CANCELLED
+}

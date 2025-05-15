@@ -1,0 +1,27 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "^2.9.0",
+    "@line/liff": "^2.26.0",
+    "@pinia/nuxt": "^0.11.0",
+    "@prisma/client": "^6.7.0",
+    "@prisma/nuxt": "^0.3.0",
+    "@sidebase/nuxt-auth": "0.10.1",
+    "bcryptjs": "^3.0.2",
+    "next-auth": "~4.21.1",
+    "nuxt": "^3.17.1",
+    "sweetalert2": "^11.19.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1",
+    "vuetify-nuxt-module": "0.18.6"
+  }
+}
