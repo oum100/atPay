@@ -13,6 +13,7 @@ model User {
   email             String?        @unique
   image             String?
   password          String?
+  language          String?       @default("en")
 
   emailVerified     DateTime?
   socialAccounts    Account[]
@@ -20,8 +21,8 @@ model User {
   profile           Profile?       
   apiCredential     ApiCredential?
 
-  userType          UserType  @relation(fields: [userTypeId], references: [id])
-  userTypeId        Int
+  userType          UserType?  @relation(fields: [userTypeId], references: [id])
+  userTypeId        Int?
 
   userRolePerContexts     UserRolePerContext[]
 
@@ -220,20 +221,21 @@ model AssetType {
 }
 
 model Asset {
-  id        Int     @id @default(autoincrement())
-  assetId   String  @unique
-  name      String
-  typeId    Int
-  shopId    Int
-  brandUuid String
-  status    String?
-  shop      Shop      @relation(fields: [shopId], references: [id])
-  brand     Brand     @relation(fields: [brandUuid], references: [brandId])
-  assetType AssetType @relation(fields: [typeId], references: [id])
-  device    Device?
-  machine   Machine?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id          Int     @id @default(autoincrement())
+  assetId     String  @unique
+  name        String
+  typeId      Int
+  shopId      Int
+  brandUuid   String
+  status      String?
+  shop        Shop      @relation(fields: [shopId], references: [id])
+  brand       Brand     @relation(fields: [brandUuid], references: [brandId])
+  assetType   AssetType @relation(fields: [typeId], references: [id])
+  device      Device?
+  machine     Machine?
+  products    ProductOnAsset[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model DeviceType {
@@ -256,7 +258,7 @@ model Device {
   deviceType   DeviceType? @relation(fields: [deviceTypeId], references: [id])
   configId     Int?
   config       Config?     @relation(fields: [configId], references: [id])
-  products     ProductOnDevice[]
+  // products     ProductOnDevice[]
   transactions Transaction[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
@@ -349,19 +351,29 @@ model Product {
   qty        Int
   unitId     Int
   unit       ProductUnit @relation(fields: [unitId], references: [id])
-  devices    ProductOnDevice[]
+  // devices    ProductOnDevice[]
+  asset      ProductOnAsset[]
   transactions Transaction[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 }
 
-model ProductOnDevice {
-  id               Int    @id @default(autoincrement())
-  productSku       String
-  deviceMacAddress String
-  product Product @relation(fields: [productSku], references: [sku])
-  device  Device  @relation(fields: [deviceMacAddress], references: [macAddress])
-  createdAt DateTime @default(now())
+// model ProductOnDevice {
+//   id                Int    @id @default(autoincrement())
+//   productSku        String
+//   deviceMacAddress  String
+//   product           Product @relation(fields: [productSku], references: [sku])
+//   device            Device  @relation(fields: [deviceMacAddress], references: [macAddress])
+//   createdAt         DateTime @default(now())
+// }
+
+model ProductOnAsset {
+  id                Int    @id @default(autoincrement())
+  productSku        String
+  assetId           String
+  product           Product @relation(fields: [productSku], references: [sku])
+  asset             Asset  @relation(fields: [assetId], references: [assetId])
+  createdAt         DateTime @default(now())  
 }
 
 model Transaction {

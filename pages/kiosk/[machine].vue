@@ -5,16 +5,16 @@
 
             <div class="my-2">
                 <v-avatar size="70">
-                    <!-- <v-img
-                        alt="John"
-                        src="https://cdn.vuetifyjs.com/images/john.png"
-                    >
-                    </v-img> -->
                     <v-img
-                        alt="User profile"
+                        alt="John"
                         :src="profile?.pictureUrl"
                     >
                     </v-img>
+                    <!-- <v-img
+                        alt="User profile"
+                        :src="profile?.pictureUrl"
+                    >
+                    </v-img> -->
                 </v-avatar>
             </div> 
         
@@ -115,7 +115,6 @@
 </template>
 
 <script setup lang="ts">
-    import liff from '@line/liff'
 
     definePageMeta({
         auth:false,
@@ -160,34 +159,20 @@
     ])
 
     const machineId = route.params.machine as string
-    const profile = ref<any>(null)
+    const profile = ref<any>({
+        name: 'John',
+        userId: 'https://cdn.vuetifyjs.com/images/john.png',
+        pictureUrl: 'https://cdn.vuetifyjs.com/images/john.png',
+    })
     const error = ref('')
     const loading = ref(true)
 
-    const config = useRuntimeConfig()
-
-    onMounted(async () => {
-        try {
-            const liff_id = config.public.line_liff_id
-            // const liff_id = '1656517227-vB0Gk4zY'
-            await liff.init({ liffId: liff_id }) // 👈 ใช้ LIFF ID จริง
-            if (!liff.isLoggedIn()) liff.login()
-            
-            const user = await liff.getProfile()
-            profile.value = {
-            name: user.displayName,
-            userId: user.userId,
-            pictureUrl: user.pictureUrl,
-            machineId,
-            }
-
-            console.log("Line Profile: ", profile.value)
-        } catch (e: any) {
-            error.value = e.message
-        } finally {
-            loading.value = false
-        }
-    })
+            //     profile.value = {
+            // name: user.displayName,
+            // userId: user.userId,
+            // pictureUrl: user.pictureUrl,
+            // machineId,
+            // }
 
     const selectedAsset = computed(() => {
         return assetData.value.find((a) => a.assetId === machineId)

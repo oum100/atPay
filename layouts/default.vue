@@ -2,47 +2,45 @@
   <v-app>
     <!-- 🔵 Fixed App Bar -->
     <v-app-bar color="primary" dark fixed>
-      <v-app-bar-nav-icon @click="drawer = !drawer" />
+      <v-app-bar-nav-icon @click="toggleDrawer" variant="text"/>
       <v-app-bar-title class="font-kanit text-h4">atPAY</v-app-bar-title>
+
+      <!-- <v-spacer /> -->
+      <!-- AppBar Menu -->
+      <!-- <v-btn variant="plain" to="/" v-if="language=='EN'">Product</v-btn>
+      <v-btn variant="plain" to="/" v-if="language=='TH'">สินค้า</v-btn>
+      <v-btn variant="plain" to="/">Services</v-btn>
+      <v-btn variant="plain" to="/">Customer</v-btn>
+      <v-btn variant="plain" to="/">About Us</v-btn>
+      <v-btn variant="plain" to="/">Contact Us</v-btn> -->
+      <AppBarMenu/>
+      <!-- End of AppBar Menu -->
+
       <v-spacer />
 
       <div v-if="status === 'authenticated'">
-        <v-btn prepend-icon="mdi-logout" variant="text" @click="signOut({ callbackUrl: '/' })">SignOut</v-btn>
+        <v-btn prepend-icon="mdi-logout" variant="plain" @click="signOut({ callbackUrl: '/' })">SignOut</v-btn>
       </div>
       <div v-else>
-        <v-btn prepend-icon="mdi-login" variant="text" to="/auth/signin">SignIn</v-btn>
+        <v-btn prepend-icon="mdi-login" variant="plain" to="/auth/signin">SignIn</v-btn>
+        <v-btn prepend-icon="mdi-account-plus" variant="plain" to="/auth/signup">SignUp</v-btn>
       </div>
 
       <v-btn icon @click="toggleTheme">
         <v-icon>{{ themeIcon }}</v-icon>
       </v-btn>
 
-
-
     </v-app-bar>
-
-    <!-- 🔵 Manual layout starts here -->
  
-      <!-- ⬅️ Drawer on the left -->
-      <DrawerMenu :drawer="drawer"/>
-      <!-- <v-navigation-drawer 
-        app
-        v-model="drawer" 
-        :permanent="permanent"
-        :temporary="!permanent"
-        >
-        <v-list>
-          <v-list-item title="Dashboard" />
-          <v-list-item title="Settings" />
-        </v-list>
-      </v-navigation-drawer> -->
+    <!-- ⬅️ Drawer on the left -->
+    <DrawerMenu :drawer="drawer"/>
 
       <!-- 🟩 Main content auto expands -->
-      <v-main app class="custom-main" :class="{ 'drawer-open': drawer && mdAndUp }">
-        <v-container fluid>
-          <slot />
-        </v-container>
-      </v-main>
+    <v-main app class="custom-main" :class="{ 'drawer-open': drawer && mdAndUp }">
+      <v-container fluid>
+        <slot />
+      </v-container>
+    </v-main>
 
 
     <!-- 🔵 Footer -->
@@ -53,7 +51,12 @@
 </template>
 
 <script setup lang="ts">
-  import DrawerMenu from '~/components/DrawerMenu.vue'
+  import DrawerMenu from '@@/components/DrawerMenu.vue'
+  import { useAuthStore } from '@@/stores/auth'
+  import type { MenuItem, SupportedLang } from '@@/types/appBarMenu'
+  import {menuItems} from '@@/types/appBarMenu'
+  import AppBarMenu from '@@/components/AppBarMenu.vue'
+
   const drawer = ref(false)
   const theme = useAppTheme()
 
@@ -72,7 +75,18 @@
 
   const permanent = ref(false)        // ❌ ไม่ permanent ตอน mounted
   const { mdAndUp } = useDisplay()    //
-  const {status,data,signIn, signOut } = useAuth()
+  const {status, signOut } = useAuth()
+
+  //Language Setting
+  const authStore = useAuthStore()
+  const supportedLangs: SupportedLang[] = ['EN', 'TH', 'JP', 'VN']
+  const language = computed<SupportedLang>(() => {
+    const lang = authStore.user?.language?.toUpperCase()
+    return supportedLangs.includes(lang as SupportedLang)
+      ? (lang as SupportedLang)
+      : 'EN' // fallback
+  })
+
 
   watch(drawer, (newVal) => {
       if (newVal && mdAndUp.value) {

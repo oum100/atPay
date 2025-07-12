@@ -14,6 +14,7 @@ export default NuxtAuthHandler({
     secret: process.env.AUTH_SECRET,
     pages: {
         signIn: '/auth/signin',       // หน้า login
+        newUser: '/auth/signup',
         error: '/auth/error', // หน้า error ตอน login fail
       },    
     session: {
@@ -94,6 +95,9 @@ export default NuxtAuthHandler({
         if(account?.provider !== 'credentials'){
           const existingUser = await prisma.user.findUnique({where:{email:profile?.email} })
 
+          // console.log("User Found: ",existingUser)
+
+          //if user already register with email and this email same as Social
           if(existingUser){
             const existingAccount = await prisma.account.findFirst({
               where: {
@@ -102,6 +106,7 @@ export default NuxtAuthHandler({
               }
             })
 
+            //if not found Account create it.
             if (!existingAccount) {
               await prisma.account.create({
                 data: {
@@ -122,32 +127,44 @@ export default NuxtAuthHandler({
 
             // เพิ่ม appKey ถ้ายังไม่มี
             return true
+          }else{
+            //Automatic add by Sidbase/nuxt-auth
+            //to User Table and Account Table.
+
+            // console.log("SignIN User: ",user)
+            // console.log("SignIN Account",account)
+            // console.log("SignIN Profile",profile)
           }
         }
         return true; // Example: Allow sign-in
       },
 
       async session({session,token}){
+        // console.log("Session token: ",token)
           session.user = {
             id: token.id!,
             name: token.name,
             email: token.email,
             image: token.picture,
-            provider: token.provider
+            provider: token.provider,
+            language: token.language ?? 'en'
           }
           // console.log('Session: ',session)
+          
           return session
       },    
 
       async jwt({token,user,account,profile}){
+        // console.log("Jwt callback user Data: ",user)
         if(user){
           token.id = user.id || user.uuid  // ใช้ uuid จาก Prisma เป็นหลัก
           token.email = user.email
           token.name = user.name
           token.picture = user.image
           token.provider = account?.provider
+          token.language = (user as any)?.language ?? 'en'
         }
-        // console.log("Jwt: ",token)
+        // console.log("Jwt token: ",token)
         return token
       },      
       

@@ -15,14 +15,14 @@
               <template #prepend>
                 <v-icon>{{ item.icon }}</v-icon>
               </template>
-              <v-list-item-title class="text-subtitle-1">{{ item.title }}</v-list-item-title>
+              <v-list-item-title class="text-subtitle-1">{{ item.title[language] }}</v-list-item-title>
             </v-list-item>
           </template>
           <v-list-item v-for="(child, cIndex) in item.children" :key="cIndex" :to="child.to" link>
             <template #prepend>
               <v-icon>{{ child.icon }}</v-icon>
             </template>
-            <v-list-item-title class="text-subtitle-1">{{ child.title }}</v-list-item-title>
+            <v-list-item-title class="text-subtitle-1">{{ item.title[language] }}</v-list-item-title>
           </v-list-item>
         </v-list-group>
 
@@ -30,9 +30,9 @@
           <template #prepend>
             <v-icon>{{ item.icon }}</v-icon>
           </template>
-          <v-list-item-title class="text-subtitle-1">{{ item.title }}</v-list-item-title>
+          <v-list-item-title class="text-subtitle-1">{{ item.title[language] }}</v-list-item-title>
         </v-list-item>
-
+        
       </template>
     </v-list>
   </v-navigation-drawer>
@@ -41,9 +41,9 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import { useAuthStore } from '@/stores/auth'
-  import menuData from '@/assets/menu.json'
-  import {menuItems} from '@/types/menu'
-  import type { MenuItem } from '@/types/menu'
+  import {menuItems} from '~/types/drawerMenu'
+  import type { MenuItem, SupportedLang } from '~/types/drawerMenu'
+  
   
   const props = defineProps({
       drawer: {
@@ -60,21 +60,37 @@
   
   const authStore = useAuthStore()
   const route = useRoute()
-  
+
+// watchEffect(() => {
+//   console.log('user in store:', authStore.user)
+//   console.log('user.language:', authStore.user?.language)
+// })
+
   // ฟังก์ชันตรวจสอบสิทธิ์การเข้าถึงเมนู
   const hasAccess = (roles: string[] = []) => {
       if (!roles || roles.length === 0) return true
       if (!authStore.user || !authStore.user.roles) return false
       return roles.some(role =>
-      authStore.user!.roles?.some(userRole => userRole.role === role)
+        authStore.user!.roles?.some(userRole => userRole.role === role)
       )
   }
+
+  //Language Setting
+  const supportedLangs: SupportedLang[] = ['EN', 'TH', 'JP', 'VN']
+  const language = computed<SupportedLang>(() => {
+    const lang = authStore.user?.language?.toUpperCase()
+    return supportedLangs.includes(lang as SupportedLang)
+      ? (lang as SupportedLang)
+      : 'EN' // fallback
+  })
+
+  
 
   // กรองเมนูตามสิทธิ์ของผู้ใช้
   const filteredMenu = computed(() => {
     const filterMenu = (items: MenuItem[]): MenuItem[] => {
       return items
-        .map(item => {
+        .map(item => {      
           // ตรวจสอบสิทธิ์ของเมนูหลัก
           if (!hasAccess(item.roles)) {
             return null;

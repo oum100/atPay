@@ -62,7 +62,7 @@
             block
             @click="handleSignup"
           >
-            Registration
+            Signup
           </v-btn>
         </v-form>
   
@@ -90,17 +90,26 @@
   import { ref } from 'vue'
   import Swal from 'sweetalert2'
   
-  const form = ref({
+
+  const defaultForm = ref({
     name: '',
     email: '',
     password: '',
     redirect:'false',
     callbackUrl:'/device'
   })
-  
+
+  const form = ref({ ...defaultForm.value })
   const formRef = ref()
   const showPassword = ref(false)
   const router = useRouter()
+
+  function resetForm() {
+    form.value = { ...defaultForm.value }
+    formRef.value?.resetValidation()
+  }
+  
+
   
   const rules = {
     required: (v: string) => !!v || 'Required.',
@@ -124,13 +133,13 @@
     }
   
     // ต่อ API ได้ตรงนี้เลย
+    console.log("Form Data:",form.value)
     const {status, error} = await useFetch('/api/auth/register',{
         method: 'POST',
         body: form.value
     })
 
     if(status.value == "error"){
-      // push.error(error.value?.statusMessage as string)
       Swal.fire({
         icon: 'error',
         title: 'Registration Failed',
@@ -139,6 +148,8 @@
         showConfirmButton: false,
         position: 'top',
       })
+
+      resetForm()
 
       throw createError({
         statusCode:500,

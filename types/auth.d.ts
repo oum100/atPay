@@ -12,7 +12,8 @@ declare module 'next-auth' {
       email?: string | null
       name?: string | null
       image?: string | null
-      provider?: string    
+      provider?: string,    
+      language: string | 'en'
     }
   }
 }
@@ -23,6 +24,7 @@ declare module "next-auth/jwt" {
     email?: string | null
     name?: string | null
     picture?: string | null
-    provider?: string
+    provider?: string,
+    language?: string | 'en'
   }
 }

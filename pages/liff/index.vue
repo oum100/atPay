@@ -3,22 +3,23 @@ import { useRoute, useRouter } from 'vue-router'
 import liff from '@line/liff'
 
 definePageMeta({
-    auth:false
+    auth:false,
+    layout:'blank'
 })
 
 const route = useRoute()
 const router = useRouter()
 const error = ref()
-
+const config = useRuntimeConfig()
 
 onMounted(async () => {
 
   const liffState = route.query['liff.state']
   console.log("LiffState:",liffState)
 
-  // const liff_id = useRuntimeConfig().line_liff_id
-  const liff_id = '1656517227-vB0Gk4zY'
-  await liff.init({ liffId: liff_id })
+  console.log("liff_id: ",config.public.line_liff_id)
+  // const liff_id = '1656517227-vB0Gk4zY'
+  await liff.init({ liffId: config.public.line_liff_id})
 
   if (!liff.isLoggedIn()){ 
     liff.login() 

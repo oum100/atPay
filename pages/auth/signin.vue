@@ -113,8 +113,8 @@
     const form = ref({
       email:'',
       password: '',
-      redirect:true,
-      callbackUrl:'/device'
+      redirect:false,
+      callbackUrl:'/page2'
     })
 
     const rules = {
@@ -164,16 +164,18 @@
       const result = await signIn('credentials', {
         email: form.value.email,
         password: form.value.password,
-        redirect: false,
-        callbackUrl: '/device', // or any page after login
+        redirect: true,
+        callbackUrl: '/page2', // or any page after login
       })
 
       loading.value = false
 
       if (result?.ok) {
-        // Login success
-        const session  = await useAuth().getSession()
-        authStore.setUser(session?.user)
+        //Set session to authStore   
+        //Disable due to use plugins/init-auth.client.ts แทน
+        // if (session.value?.user) {
+        //   authStore.setUser(session.value.user) // ✅ sync here
+        // }
 
         await Swal.fire({
           icon: 'success',
@@ -182,7 +184,7 @@
           timer: 2000,
           showConfirmButton: false
         })      
-        router.push('/device')
+        // router.push('/device')
         // router.push(callbackUrl)
 
       }else{

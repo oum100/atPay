@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', {
       name?: string | null
       email?: string | null
       image?: string | null
+      language?:string | 'en'
       provider?: string
       userType?: string
       roles?: Array<{
@@ -24,7 +25,7 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     setUser(sessionUser: any) {
-      this.user = sessionUser
+      this.user = {...sessionUser}
     },
     clearUser() {
       this.user = null
